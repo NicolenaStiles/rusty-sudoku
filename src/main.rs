@@ -2,10 +2,10 @@
 // serves as an entry point for the MVC framework
 // (or at least my sloppy version of it)
 
-mod rusty_sudoku_view;
+mod rusty_sudoku_model;
 
 fn main() {
-    
+
     // test entry array for debugging
     // (make it a string since that's how we read input)
     let test_input : Vec<u8> =
@@ -30,7 +30,13 @@ fn main() {
              4,3,2,6,1,7,5,9,8,
              7,8,6,4,5,9,3,1,2];
 
-    println!("{:?}", test_input.len());
-    println!("{:?}", test_solution.len());
+    let mut test_puzzle = rusty_sudoku_model::Puzzle{
+                            initial_state: test_input,
+                            current_state : test_input,
+                            solution: test_solution
+                            };
+
+    test_puzzle.print_init_state();
+    test_puzzle.print_soln_state();
 
 }
