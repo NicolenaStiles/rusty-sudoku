@@ -4,19 +4,22 @@
 
 mod rusty_sudoku_model;
 
+extern crate bitflags;
+
 // DEBUG ONLY
 // function to print sudoku grids 
 // takes in immutable slice of the full on vector
 fn pretty_print_grid(grid_numbers : &[u8]) {
 
-   // slice the vector and setting up range bounds
+   // constants, vector slicing, and setting up range bounds
+   let sudoku_size : usize = 9;
    let mut curr_idx : usize = 1;
    let mut low_idx : usize;
    
    while curr_idx <= grid_numbers.len() {
         // printing the current line
-        if curr_idx % 9 == 0 {
-            low_idx = curr_idx - 9;
+        if curr_idx % sudoku_size == 0 {
+            low_idx = curr_idx - sudoku_size;
             println!("{:?}", &grid_numbers[low_idx..curr_idx]);
             curr_idx = curr_idx + 1;
         }
@@ -63,17 +66,6 @@ fn main() {
              9,5,1,2,3,8,4,7,6,
              4,3,2,6,1,7,5,9,8,
              7,8,6,4,5,9,3,1,2];
-
-    /*
-    let mut test_puzzle = rusty_sudoku_model::Puzzle{
-                            initial_state: test_input,
-                            current_state : current_input,
-                            solution: test_solution
-                            };
-
-    test_puzzle.print_init_state();
-    test_puzzle.print_soln_state();
-    */
 
     pretty_print_grid(test_input.as_slice());
 
