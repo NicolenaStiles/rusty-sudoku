@@ -83,5 +83,6 @@ fn main() {
     // testing the ssudoku solver process
 
     // start by declaring 81 bitfields 9 bits long (sucks they can't be 8 bits or anything easy)
+    
 
 }
