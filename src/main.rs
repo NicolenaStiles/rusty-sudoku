@@ -2,21 +2,23 @@
 // serves as an entry point for the MVC framework
 // (or at least my sloppy version of it)
 
+extern crate bitflags;
 mod rusty_sudoku_model;
 
 // DEBUG ONLY
-// function to print sudoku grids 
+// function to print sudoku grids
 // takes in immutable slice of the full on vector
 fn pretty_print_grid(grid_numbers : &[u8]) {
 
    // slice the vector and setting up range bounds
+   let sudoku_size : usize = 9;
    let mut curr_idx : usize = 1;
    let mut low_idx : usize;
-   
+
    while curr_idx <= grid_numbers.len() {
         // printing the current line
-        if curr_idx % 9 == 0 {
-            low_idx = curr_idx - 9;
+        if curr_idx % sudoku_size == 0 {
+            low_idx = curr_idx - sudoku_size;
             println!("{:?}", &grid_numbers[low_idx..curr_idx]);
             curr_idx = curr_idx + 1;
         }
@@ -75,6 +77,11 @@ fn main() {
     test_puzzle.print_soln_state();
     */
 
-    pretty_print_grid(test_input.as_slice());
+    // testing debug print functionality (it works btw)
+    // pretty_print_grid(test_input.as_slice());
+
+    // testing the ssudoku solver process
+
+    // start by declaring 81 bitfields 9 bits long (sucks they can't be 8 bits or anything easy)
 
 }
