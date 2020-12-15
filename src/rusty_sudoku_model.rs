@@ -19,4 +19,13 @@ impl Puzzle {
     pub fn print_soln_state(&mut self) {
         println!("{:?}",self.solution);
     }
+    
+    /*
+    pub fn solve_puzzle(&mut self) {
+        println!("Starting the solving process!");
+
+        let mut solution_state= self.initial_state;
+
+    }
+    */
 }
