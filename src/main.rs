@@ -4,10 +4,11 @@
 
 mod rusty_sudoku_model;
 
+// for optimization only, not used in initial solution
 extern crate bitflags;
 
 // DEBUG ONLY
-// function to print sudoku grids 
+// function to print sudoku grids
 // takes in immutable slice of the full on vector
 fn pretty_print_grid(grid_numbers : &[u8]) {
 
@@ -15,7 +16,7 @@ fn pretty_print_grid(grid_numbers : &[u8]) {
    let sudoku_size : usize = 9;
    let mut curr_idx : usize = 1;
    let mut low_idx : usize;
-   
+
    while curr_idx <= grid_numbers.len() {
         // printing the current line
         if curr_idx % sudoku_size == 0 {
@@ -67,6 +68,77 @@ fn main() {
              4,3,2,6,1,7,5,9,8,
              7,8,6,4,5,9,3,1,2];
 
-    pretty_print_grid(test_input.as_slice());
+    // debug only: prints vector like a sudoku itself
+    // (does not work for the solution space, as it is a vector of vectors)
+    // pretty_print_grid(test_input.as_slice());
 
+    // create a vector of vectors to hold the 3D solution space
+    // initialize with zeros
+    let mut solution_space : Vec<Vec<u8>> = vec![vec![0; 0]; 81];
+
+    // loading the solution space
+    for (idx, val) in test_input.iter().enumerate() {
+        // if the value is known, the only entry in the vector is the value itself
+        if *val != 0 {
+           solution_space[idx].push(*val);
+        } else {
+            // if the value is not known, append all possible variants without checking the rules
+            for x in 1..=9 {
+                solution_space[idx].push(x);
+           }
+        }
+    }
+
+    // println!("{:?}", solution_space);
+
+    // begin solution process
+    let mut solved = false;
+
+    // for all the 'solved' grid items...
+    for entry in solution_space {
+       if entry.len() == 1 {
+
+        let current_value : u8 = entry[0];
+
+        // remove from row
+
+        // remove from columns
+
+        // remove from box
+
+       }
+
+    }
+
+
+    // process for looping over and solving the puzzle
+    /*
+    while !solved {
+
+        // for all the 'solved' grid items...
+        for entry in solution_space {
+           if *entry.len() > 1 {
+
+            // remove from row
+
+            // remove from columns
+
+            // remove from box
+
+           }
+
+        }
+        // have we solved the puzzle?
+        // if any of the entries are longer than 1 element, we haven't, so keep solving.
+        // otherwise the process is complete.
+        solved = true;
+        for entry in solution_space {
+            if entry.len() > 1 {
+                solved = false;
+                break;
+            }
+        }
+
+    }
+    */
 }
