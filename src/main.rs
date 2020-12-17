@@ -49,6 +49,10 @@ fn main() {
              vec![0,0,0,0,0,7,0,9,8],
              vec![0,8,6,0,5,9,0,0,0]];
 
+    // =================
+    // INITALIZATION
+    // =================
+
     // initializing an empty 9x9 collection of grid units
     let mut solution_space = Vec::new();
     for x in 0..9 {
@@ -72,4 +76,9 @@ fn main() {
             }
         }
     }
+
+    // =================
+    // SOLUTION PROCESS
+    // =================
+
 }
