@@ -31,7 +31,7 @@ fn pretty_print_grid(grid_numbers : &[u8]) {
 }
 
 #[derive(Clone)]
-struct grid_unit {
+struct GridUnit {
     solutions : Vec<u8>,
     is_final : bool
 }
@@ -58,7 +58,7 @@ fn main() {
     for x in 0..9 {
         let mut solution_space_sub = Vec::new();
         for y in 0..9 {
-            let mut single_grid_obj = grid_unit{solutions : vec![], is_final : false };
+            let mut single_grid_obj = GridUnit{solutions : vec![], is_final : false };
             solution_space_sub.push(single_grid_obj);
         }
         solution_space.push(solution_space_sub);
@@ -77,8 +77,79 @@ fn main() {
         }
     }
 
+    // debug grid print loop
+    for x in 0..9 {
+        for y in 0..9 {
+            println!("{0:?} {1:?}", solution_space[x][y].is_final,
+                                    solution_space[x][y].solutions);
+        }
+    }
+
     // =================
     // SOLUTION PROCESS
     // =================
+
+    // variable for the solution state of the puzzle,
+    // not just the individual grid items
+    let mut solved : bool = false;
+
+    // process for looping over and solving the puzzle
+    // while !solved {
+
+        // for all the 'solved' grid items...
+    for x in 0..9 {
+        for y in 0..9 {
+            if solution_space[x][y].is_final == true {
+
+                // get current finalized value
+                let mut curr_num : u8 = solution_space[x][y].solutions[0];
+
+                // remove from row
+                for row in 0..9 {
+                    if row != x {
+                        solution_space[row][y].solutions.retain(|&x| x != curr_num);
+                    }
+                }
+
+                // remove from columns
+                for col in 0..9 {
+                    if col != y {
+                        solution_space[x][col].solutions.retain(|&x| x != curr_num);
+                    }
+                }
+
+                // remove from box
+                for item in 0..3 {
+
+                }
+            }
+        }
+    }
+
+    println!("------------------------");
+
+    // debug grid print loop
+    for x in 0..9 {
+        for y in 0..9 {
+            println!("{0:?} {1:?}", solution_space[x][y].is_final,
+                                    solution_space[x][y].solutions);
+        }
+    }
+
+
+        // have we solved the puzzle?
+        // if any of the entries are longer than 1 element, we haven't, so keep solving.
+        // otherwise the process is complete.
+    //     solved = true;
+    //     for x in 0..9 {
+    //         for y in 0..9 {
+    //             if solution_space[x][y].is_final == false {
+    //                 solved = false;
+    //                 break;
+    //             }
+    //         }
+    //     }
+    //
+    // }
 
 }
