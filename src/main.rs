@@ -42,7 +42,7 @@ fn main() {
     // CURRENT ISSUE: trims options correctly, but doesn't affirm single remaining
     // options for solutions based on solution space. See step one on guided walkthrough
     // for exmaple of needed "affirmative" logic.
-    
+
     let mut test_input : Vec<Vec<u8>> =
         vec![vec![0,0,0,0,0,0,6,8,0],
              vec![0,0,0,0,7,3,0,0,9],
@@ -104,6 +104,7 @@ fn main() {
 
         println!("iteration # : {:?}",iter_num);
 
+        // POSIBILITY REDUCTION
         // for all the 'solved' grid items...
         for x in 0..9 {
             for y in 0..9 {
@@ -149,6 +150,17 @@ fn main() {
                 }
             }
         }
+
+        // POSSIBILITY AFIRMATION
+        // add "affirm row" here (i.e., if this row still needs #3 and it can only
+        // possibly be written to one place, write that value to the grid unit and
+        // reduce the possibilites vector)
+        for row in 0..9 {
+            for cell in 0..9 {
+
+            }
+        }
+
 
         // mark newly final solutions
         for x in 0..9 {
