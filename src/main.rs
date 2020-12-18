@@ -38,16 +38,21 @@ struct GridUnit {
 
 fn main() {
 
+    // websudoku.com/images/example-steps.html
+    // CURRENT ISSUE: trims options correctly, but doesn't affirm single remaining
+    // options for solutions based on solution space. See step one on guided walkthrough
+    // for exmaple of needed "affirmative" logic.
+    
     let mut test_input : Vec<Vec<u8>> =
-        vec![vec![2,7,8,1,0,0,0,0,3],
-             vec![6,0,0,3,8,0,0,5,1],
-             vec![0,1,0,7,4,0,0,2,0],
-             vec![1,0,5,0,7,0,2,0,0],
-             vec![3,0,0,8,2,4,1,0,0],
-             vec![0,0,4,0,0,0,9,3,0],
-             vec![0,5,1,0,0,8,4,7,0],
-             vec![0,0,0,0,0,7,0,9,8],
-             vec![0,8,6,0,5,9,0,0,0]];
+        vec![vec![0,0,0,0,0,0,6,8,0],
+             vec![0,0,0,0,7,3,0,0,9],
+             vec![3,0,9,0,0,0,0,4,5],
+             vec![4,9,0,0,0,0,0,0,0],
+             vec![8,0,3,0,5,0,9,0,2],
+             vec![0,0,0,0,0,0,0,3,6],
+             vec![9,6,0,0,0,0,3,0,8],
+             vec![7,0,0,6,8,0,0,0,0],
+             vec![0,2,8,0,0,0,0,0,0]];
 
     // =================
     // INITALIZATION
@@ -78,12 +83,12 @@ fn main() {
     }
 
     // debug grid print loop
-    for x in 0..9 {
-        for y in 0..9 {
-            println!("{0:?} {1:?}", solution_space[x][y].is_final,
-                                    solution_space[x][y].solutions);
-        }
-    }
+    // for x in 0..9 {
+    //     for y in 0..9 {
+    //         println!("{0:?} {1:?}", solution_space[x][y].is_final,
+    //                                 solution_space[x][y].solutions);
+    //     }
+    // }
 
     // =================
     // SOLUTION PROCESS
@@ -91,10 +96,13 @@ fn main() {
 
     // variable for the solution state of the puzzle,
     // not just the individual grid items
+    let mut iter_num : u64 = 0;
     let mut solved : bool = false;
 
     // process for looping over and solving the puzzle
     while !solved {
+
+        println!("iteration # : {:?}",iter_num);
 
         // for all the 'solved' grid items...
         for x in 0..9 {
@@ -162,6 +170,20 @@ fn main() {
                     break;
                 }
             }
+        }
+
+        iter_num = iter_num + 1;
+
+        // debug
+        if iter_num > 10 {
+            for x in 0..9 {
+                println!("\nRow # {:?}", x);
+                for y in 0..9 {
+                    println!("{0:?} {1:?}", solution_space[x][y].is_final,
+                                            solution_space[x][y].solutions);
+                }
+            }
+            break;
         }
 
     }
