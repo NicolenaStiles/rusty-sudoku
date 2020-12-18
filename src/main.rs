@@ -94,62 +94,85 @@ fn main() {
     let mut solved : bool = false;
 
     // process for looping over and solving the puzzle
-    // while !solved {
+    while !solved {
 
         // for all the 'solved' grid items...
-    for x in 0..9 {
-        for y in 0..9 {
-            if solution_space[x][y].is_final == true {
+        for x in 0..9 {
+            for y in 0..9 {
+                if solution_space[x][y].is_final == true {
 
-                // get current finalized value
-                let mut curr_num : u8 = solution_space[x][y].solutions[0];
+                    // get current finalized value
+                    let mut curr_num : u8 = solution_space[x][y].solutions[0];
 
-                // remove from row
-                for row in 0..9 {
-                    if row != x {
-                        solution_space[row][y].solutions.retain(|&x| x != curr_num);
+                    // remove from row
+                    for row in 0..9 {
+                        if row != x {
+                            solution_space[row][y].solutions.retain(|&x| x != curr_num);
+                        }
                     }
-                }
 
-                // remove from columns
-                for col in 0..9 {
-                    if col != y {
-                        solution_space[x][col].solutions.retain(|&x| x != curr_num);
+                    // remove from columns
+                    for col in 0..9 {
+                        if col != y {
+                            solution_space[x][col].solutions.retain(|&x| x != curr_num);
+                        }
                     }
-                }
 
-                // remove from box
-                for item in 0..3 {
+                    // remove from box
+                    // there's a more efficent way to do this, I'm just being lazy I guess
+                    let mut box_row : u8 = (x as u8) / 3;
+                    let mut box_col : u8 = (y as u8) / 3;
+                    let mut box_num = (box_row * 3) + box_col;
+
+                    for row in 0..9 {
+                        for col in 0..9 {
+                            let mut inner_box_row : u8 = (row as u8) / 3;
+                            let mut inner_box_col : u8 = (col as u8) / 3;
+                            let mut inner_box_num : u8 = (inner_box_row * 3) + inner_box_col;
+
+                            if (row != x) && (col != y) {
+                                if box_num == inner_box_num {
+                                    solution_space[row][col].solutions.retain(|&x| x != curr_num);
+                                }
+                            }
+                        }
+                    }
 
                 }
             }
         }
-    }
 
-    println!("------------------------");
-
-    // debug grid print loop
-    for x in 0..9 {
-        for y in 0..9 {
-            println!("{0:?} {1:?}", solution_space[x][y].is_final,
-                                    solution_space[x][y].solutions);
+        // mark newly final solutions
+        for x in 0..9 {
+            for y in 0..9 {
+                if solution_space[x][y].solutions.len() == 1 {
+                    solution_space[x][y].is_final = true;
+                }
+            }
         }
-    }
-
 
         // have we solved the puzzle?
         // if any of the entries are longer than 1 element, we haven't, so keep solving.
         // otherwise the process is complete.
-    //     solved = true;
-    //     for x in 0..9 {
-    //         for y in 0..9 {
-    //             if solution_space[x][y].is_final == false {
-    //                 solved = false;
-    //                 break;
-    //             }
-    //         }
-    //     }
-    //
-    // }
+        solved = true;
+        for x in 0..9 {
+            for y in 0..9 {
+                if solution_space[x][y].is_final == false {
+                    solved = false;
+                    break;
+                }
+            }
+        }
 
+    }
+
+    println!("The puzzle is solved! Final answer:");
+
+    for row in 0..9 {
+        let mut row_print = Vec::new();
+        for col in 0..9 {
+            row_print.push(solution_space[row][col].solutions[0]);
+        }
+        println!("{:?}", row_print);
+    }
 }
