@@ -5,6 +5,8 @@
 // constant for the size of the sudoku puzzle
 // e.g. 9x9 or whatever
 
+use std::collections::HashMap;
+
 static SUDOKU_SIZE : usize = 9; // needs to be a usize to be itterable
 
 struct SudokuPuzzle {
@@ -82,22 +84,6 @@ fn main() {
                                          col_final_status : vec![vec![false;9]; 9],
                                          box_final_status : vec![vec![false;9]; 9]};
 
-    for row in 0..SUDOKU_SIZE{
-        for col in 0..SUDOKU_SIZE {
-            if current_puzzle.grid_squares[row][col].is_final == true {
-                println!("{:?}", current_puzzle.grid_squares[row][col].solutions);
-                println!("{:?}", current_puzzle.grid_squares[row][col].row_id);
-                println!("{:?}", current_puzzle.grid_squares[row][col].col_id);
-                println!("{:?}", current_puzzle.grid_squares[row][col].box_id);
-                println!("---------------");
-            }
-        }
-    }
-
-    println!("=====================");
-
-
-    println!("{:?}", current_puzzle.row_final_status[0]);
     // setting final markers
     for x in 0..SUDOKU_SIZE {
         for y in 0.. SUDOKU_SIZE {
@@ -110,24 +96,13 @@ fn main() {
                 let curr_col : u8 = current_puzzle.grid_squares[x][y].col_id;
                 let curr_box : u8 = current_puzzle.grid_squares[x][y].box_id;
 
-                println!("val: {:0}, row: {:1}, col: {:2}, box: {:3}", curr_num,
-                                                                       curr_row,
-                                                                       curr_col,
-                                                                       curr_box);
-
-
                 current_puzzle.row_final_status[curr_row as usize][(curr_num-1) as usize] = true;
+                current_puzzle.col_final_status[curr_col as usize][(curr_num-1) as usize] = true;
+                current_puzzle.box_final_status[curr_box as usize][(curr_num-1) as usize] = true;
 
-                /*
-                current_puzzle.row_final_status[(curr_num-1) as usize] = true;
-                current_puzzle.col_final_status[(curr_num-1) as usize] = true;
-                current_puzzle.box_final_status[(curr_num-1) as usize] = true;
-                */
             }
         }
     }
-
-    println!("{:?}", current_puzzle.row_final_status[0]);
 
     // ---------------------------------
     // SOLUTION PROCESS
@@ -136,8 +111,6 @@ fn main() {
     // not just the individual grid items
     let mut iter_num : u64 = 0;
     let mut solved : bool = false;
-
-    /*
 
     while !solved {
 
@@ -180,7 +153,38 @@ fn main() {
                 }
             }
         }
-    }
 
-    */
+        // ---------------------------------
+        // SOLUTION PROCESS: AFFIRMATION
+        // ---------------------------------
+
+        // row affirmation
+        for r in 0..SUDOKU_SIZE {
+            // if we're missing any values in the row
+            let mut row_hash = HashMap::new();
+            for h in 0..SUDOKU_SIZE {
+                row_hash.insert(h.to_string(), None);
+            }
+
+            println!("{:?}", row_hash);
+            break;
+
+            for c in 0..SUDOKU_SIZE {
+
+            }
+
+        }
+
+        // col affirmation
+
+        // box affirmation
+
+        // DEBUG ONLY
+        if iter_num > 10 {
+            break;
+        } else {
+            iter_num = iter_num + 1;
+        }
+
+    }
 }
