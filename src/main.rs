@@ -18,11 +18,11 @@ struct SudokuPuzzle {
 
 #[derive(Clone)]
 struct GridUnit {
-    solutions : Vec<u8>,
+    solutions : Vec<usize>,
     is_final : bool,
-    row_id: u8,
-    col_id: u8,
-    box_id: u8
+    row_id: usize,
+    col_id: usize,
+    box_id: usize
 }
 
 fn main() {
@@ -32,7 +32,7 @@ fn main() {
     // options for solutions based on solution space. See step one on guided walkthrough
     // for exmaple of needed "affirmative" logic.
 
-    let mut test_input : Vec<Vec<u8>> =
+    let mut test_input : Vec<Vec<usize>> =
         vec![vec![0,0,0,0,0,0,6,8,0],
              vec![0,0,0,0,7,3,0,0,9],
              vec![3,0,9,0,0,0,0,4,5],
@@ -52,13 +52,13 @@ fn main() {
     for x in 0..SUDOKU_SIZE {
         let mut solution_space_sub = Vec::new();
             for y in 0..SUDOKU_SIZE {
-                let box_row : u8 = (x as u8) / 3;
-                let box_col : u8 = (y as u8) / 3;
-                let box_num = (box_row * 3) + box_col;
+                let box_row : usize = (x as usize) / 3;
+                let box_col : usize = (y as usize) / 3;
+                let box_num : usize = (box_row * 3) + box_col;
                 let mut single_grid_obj = GridUnit{solutions : vec![],
                                                     is_final : false,
-                                                    row_id : x as u8,
-                                                    col_id : y as u8,
+                                                    row_id : x,
+                                                    col_id : y,
                                                     box_id : box_num};
                 solution_space_sub.push(single_grid_obj);
             }
@@ -73,7 +73,7 @@ fn main() {
                 solution_space[x][y].solutions.push(test_input[x][y]);
                 solution_space[x][y].is_final = true;
             } else {
-                let mut filler : Vec<u8> = (1..=9).collect();
+                let filler : Vec<usize> = (1..=9).collect(); // might need to be mut for solve process?
                 solution_space[x][y].solutions.extend(filler);
             }
         }
@@ -90,15 +90,14 @@ fn main() {
             if current_puzzle.grid_squares[x][y].is_final == true {
 
                 // get current items
-                let curr_num : u8 = current_puzzle.grid_squares[x][y].solutions[0];
+                let curr_num : usize = current_puzzle.grid_squares[x][y].solutions[0];
+                let curr_row : usize = current_puzzle.grid_squares[x][y].row_id;
+                let curr_col : usize = current_puzzle.grid_squares[x][y].col_id;
+                let curr_box : usize = current_puzzle.grid_squares[x][y].box_id;
 
-                let curr_row : u8 = current_puzzle.grid_squares[x][y].row_id;
-                let curr_col : u8 = current_puzzle.grid_squares[x][y].col_id;
-                let curr_box : u8 = current_puzzle.grid_squares[x][y].box_id;
-
-                current_puzzle.row_final_status[curr_row as usize][(curr_num-1) as usize] = true;
-                current_puzzle.col_final_status[curr_col as usize][(curr_num-1) as usize] = true;
-                current_puzzle.box_final_status[curr_box as usize][(curr_num-1) as usize] = true;
+                current_puzzle.row_final_status[curr_row][(curr_num-1)] = true;
+                current_puzzle.col_final_status[curr_col][(curr_num-1)] = true;
+                current_puzzle.box_final_status[curr_box][(curr_num-1)] = true;
 
             }
         }
@@ -119,34 +118,37 @@ fn main() {
         // ---------------------------------
         for x in 0..SUDOKU_SIZE {
             for y in 0.. SUDOKU_SIZE {
-                if solution_space[x][y].is_final == true {
+                // debug only. currently removing itself from solutions.
+                print!("{0},{1} ", x, y);
+                println!("{:?}", current_puzzle.grid_squares[x][y].solutions);
+                if current_puzzle.grid_squares[x][y].is_final == true {
 
                     // get current items
-                    let mut curr_num : u8 = solution_space[x][y].solutions[0];
-                    let mut curr_row : u8 = solution_space[x][y].row_id;
-                    let mut curr_col : u8 = solution_space[x][y].col_id;
-                    let mut curr_box : u8 = solution_space[x][y].box_id;
+                    let mut curr_num : usize = current_puzzle.grid_squares[x][y].solutions[0];
+                    let mut curr_row : usize = current_puzzle.grid_squares[x][y].row_id;
+                    let mut curr_col : usize = current_puzzle.grid_squares[x][y].col_id;
+                    let mut curr_box : usize = current_puzzle.grid_squares[x][y].box_id;
 
                     // row removal
                     for c in 0..SUDOKU_SIZE {
                         if c != curr_col {
-                            solution_space[curr_row][c].solutions.retain(|&x| x != curr_num);
+                            current_puzzle.grid_squares[x][y].solutions.retain(|&x| x != curr_num);
                         }
                     }
 
                     // col removal
                     for r in 0..SUDOKU_SIZE {
                         if r != curr_row {
-                            solution_space[r][curr_col].solutions.retain(|&x| x != curr_num);
+                            current_puzzle.grid_squares[x][y].solutions.retain(|&x| x != curr_num);
                         }
                     }
 
                     // box removal
                     for xx in 0..SUDOKU_SIZE {
                         for yy in 0..SUDOKU_SIZE {
-                            let mut temp_box_id : u8 = solution_space[xx][yy].box_id;
-                            if temp_box_id == box_id && !(row_id == xx && col_id == yy) {
-                                solution_space[xx][yy].solutions.retain(|&x| x != curr_num);
+                            let mut temp_box_id : usize = current_puzzle.grid_squares[x][y].box_id;
+                            if temp_box_id == curr_box && !(curr_row == xx && curr_col == yy) {
+                                current_puzzle.grid_squares[x][y].solutions.retain(|&x| x != curr_num);
                             }
                         }
                     }
@@ -155,36 +157,16 @@ fn main() {
         }
 
         // ---------------------------------
-        // SOLUTION PROCESS: AFFIRMATION
+        // DEBUG: END AFTER SET ITTERATION
         // ---------------------------------
 
-        // row affirmation
-        for r in 0..SUDOKU_SIZE {
-            // if we're missing any values in the row
-            let mut row_hash = HashMap::new();
-            for h in 0..SUDOKU_SIZE {
-                row_hash.insert(h.to_string(), None);
-            }
-
-            println!("{:?}", row_hash);
-            break;
-
-            for c in 0..SUDOKU_SIZE {
-
-            }
-
-        }
-
-        // col affirmation
-
-        // box affirmation
-
-        // DEBUG ONLY
-        if iter_num > 10 {
-            break;
-        } else {
+        println!("{:?}", iter_num);
+        if iter_num < 10 {
             iter_num = iter_num + 1;
+        } else {
+            break;
         }
-
     }
+
+    println!("Finished: {0} after {1} iterations.", solved, iter_num);
 }
