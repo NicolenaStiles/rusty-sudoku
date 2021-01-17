@@ -87,6 +87,11 @@ while !solved {
 
 }
 
+// update final status markers
+current_puzzle.row_final_status[curr_row][(curr_num-1)] = true;
+current_puzzle.col_final_status[curr_col][(curr_num-1)] = true;
+current_puzzle.box_final_status[curr_box][(curr_num-1)] = true;
+
 // ---------------------------------
 // DEBUG: PRINTING PUZZLE STATUS
 // ---------------------------------

@@ -111,6 +111,44 @@ fn main() {
     let mut iter_num : u64 = 0;
     let mut solved : bool = false;
 
+    // hash map generation process for tracking what values are still needed where
+    let mut row_hashes = Vec::new();
+    let dummy_val : usize = 0;
+    for r in 0..SUDOKU_SIZE {
+        // if we're missing any values in the row
+        let mut row_hash = HashMap::new();
+        for h in 1..SUDOKU_SIZE+1 {
+            row_hash.insert(h.to_string(), dummy_val);
+        }
+        row_hashes.push(row_hash);
+    }
+
+    let mut col_hashes = Vec::new();
+    for r in 0..SUDOKU_SIZE {
+        // if we're missing any values in the row
+        let mut col_hash = HashMap::new();
+        for h in 1..SUDOKU_SIZE+1 {
+            col_hash.insert(h.to_string(), dummy_val);
+        }
+        col_hashes.push(col_hash);
+    }
+
+    let mut box_hashes = Vec::new();
+    for r in 0..SUDOKU_SIZE {
+        // if we're missing any values in the row
+        let mut box_hash = HashMap::new();
+        for h in 1..SUDOKU_SIZE+1 {
+            box_hash.insert(h.to_string(), dummy_val);
+        }
+        box_hashes.push(box_hash);
+    }
+
+    /*
+    println!("{:?}", row_hashes[0]);
+    println!("{:?}", col_hashes[0]);
+    println!("{:?}", box_hashes[0]);
+    */
+
     while !solved {
 
         // ---------------------------------
@@ -118,9 +156,7 @@ fn main() {
         // ---------------------------------
         for x in 0..SUDOKU_SIZE {
             for y in 0.. SUDOKU_SIZE {
-                // debug only. currently removing itself from solutions.
-                print!("{0},{1} ", x, y);
-                println!("{:?}", current_puzzle.grid_squares[x][y].solutions);
+
                 if current_puzzle.grid_squares[x][y].is_final == true {
 
                     // get current items
@@ -129,32 +165,51 @@ fn main() {
                     let mut curr_col : usize = current_puzzle.grid_squares[x][y].col_id;
                     let mut curr_box : usize = current_puzzle.grid_squares[x][y].box_id;
 
+                    // pass 'is final' data over to the hash map tracker
+                    row_hashes[curr_row].insert(curr_num.to_string(), 1);
+                    col_hashes[curr_col].insert(curr_num.to_string(), 1);
+                    box_hashes[curr_box].insert(curr_num.to_string(), 1);
+
                     // row removal
                     for c in 0..SUDOKU_SIZE {
                         if c != curr_col {
-                            current_puzzle.grid_squares[x][y].solutions.retain(|&x| x != curr_num);
+                            current_puzzle.grid_squares[x][c].solutions.retain(|&x| x != curr_num);
                         }
                     }
 
                     // col removal
                     for r in 0..SUDOKU_SIZE {
                         if r != curr_row {
-                            current_puzzle.grid_squares[x][y].solutions.retain(|&x| x != curr_num);
+                            current_puzzle.grid_squares[r][y].solutions.retain(|&x| x != curr_num);
                         }
                     }
 
                     // box removal
                     for xx in 0..SUDOKU_SIZE {
                         for yy in 0..SUDOKU_SIZE {
-                            let mut temp_box_id : usize = current_puzzle.grid_squares[x][y].box_id;
+                            let mut temp_box_id : usize = current_puzzle.grid_squares[xx][yy].box_id;
                             if temp_box_id == curr_box && !(curr_row == xx && curr_col == yy) {
-                                current_puzzle.grid_squares[x][y].solutions.retain(|&x| x != curr_num);
+                                current_puzzle.grid_squares[xx][yy].solutions.retain(|&x| x != curr_num);
                             }
                         }
                     }
                 }
             }
         }
+
+        // ---------------------------------
+        // SOLUTION PROCESS: AFFIRMATION
+        // ---------------------------------
+
+        // for each row
+        for r in 0..SUDOKU_SIZE {
+            for c in 1..SUDOKU_SIZE {
+
+            }
+        }
+
+
+
 
         // ---------------------------------
         // DEBUG: END AFTER SET ITTERATION
