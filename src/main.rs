@@ -197,26 +197,59 @@ fn main() {
             }
         }
 
+        // TODO: get rid of row/col/box hash tracking
+        //       add logic to update the is_final tracking before affirmation step
+
         // ---------------------------------
         // SOLUTION PROCESS: AFFIRMATION
         // ---------------------------------
 
         // for each row
         for r in 0..SUDOKU_SIZE {
+            let mut temp_hist = HashMap::new();
             for c in 1..SUDOKU_SIZE {
+                // iterate through solutions for each square and append
+                let temp_vec = &current_puzzle.grid_squares[r][c].solutions;
+                println!("{:?}", temp_vec);
+                for x in  temp_vec {
+                    *temp_hist.entry(x.to_string()).or_insert(0) += 1;
+                }
+            }
+            println!("{:?}", temp_hist);
+            println!("-----------");
+            // at this point, we have a hash map of all the possible values that can be entered
+            // into grid square entities for each row.
+            //
+            // the "affirmation" step means that if there is only one possible place for a number
+            // in a row/col/box and the number has not yet been placed, we need to place it now
+            // ("affirm" the placement)
 
+            println!("Row final status: {:?}", current_puzzle.row_final_status[r]);
+
+            for n in 1..SUDOKU_SIZE+1 {
+                println!("Row number: {0} checking number {1}", r, n);
+                if temp_hist[&n.to_string()] == 1 && current_puzzle.row_final_status[r][n-1] == false {
+                    println!("-----------------");
+                    println!("FOUND ONE!");
+                    println!("Hash map collection: {:?}", temp_hist);
+                    println!("Current status vector: {:?}", current_puzzle.row_final_status[r]);
+                    println!("So where is it...?");
+                    for t in 0..SUDOKU_SIZE {
+                        println!("{:?}", current_puzzle.grid_squares[r][t].solutions);
+                    }
+                    println!("-----------------")
+
+                    // update the final status tracking to reflect changes
+                }
             }
         }
-
-
-
 
         // ---------------------------------
         // DEBUG: END AFTER SET ITTERATION
         // ---------------------------------
 
         println!("{:?}", iter_num);
-        if iter_num < 10 {
+        if iter_num < 1 {
             iter_num = iter_num + 1;
         } else {
             break;
