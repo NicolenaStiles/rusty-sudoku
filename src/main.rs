@@ -73,7 +73,7 @@ fn main() {
                 solution_space[x][y].solutions.push(test_input[x][y]);
                 solution_space[x][y].is_final = true;
             } else {
-                let filler : Vec<usize> = (1..=9).collect(); // might need to be mut for solve process?
+                let mut filler : Vec<usize> = (1..=9).collect(); // might need to be mut for solve process?
                 solution_space[x][y].solutions.extend(filler);
             }
         }
@@ -111,44 +111,6 @@ fn main() {
     let mut iter_num : u64 = 0;
     let mut solved : bool = false;
 
-    // hash map generation process for tracking what values are still needed where
-    let mut row_hashes = Vec::new();
-    let dummy_val : usize = 0;
-    for r in 0..SUDOKU_SIZE {
-        // if we're missing any values in the row
-        let mut row_hash = HashMap::new();
-        for h in 1..SUDOKU_SIZE+1 {
-            row_hash.insert(h.to_string(), dummy_val);
-        }
-        row_hashes.push(row_hash);
-    }
-
-    let mut col_hashes = Vec::new();
-    for r in 0..SUDOKU_SIZE {
-        // if we're missing any values in the row
-        let mut col_hash = HashMap::new();
-        for h in 1..SUDOKU_SIZE+1 {
-            col_hash.insert(h.to_string(), dummy_val);
-        }
-        col_hashes.push(col_hash);
-    }
-
-    let mut box_hashes = Vec::new();
-    for r in 0..SUDOKU_SIZE {
-        // if we're missing any values in the row
-        let mut box_hash = HashMap::new();
-        for h in 1..SUDOKU_SIZE+1 {
-            box_hash.insert(h.to_string(), dummy_val);
-        }
-        box_hashes.push(box_hash);
-    }
-
-    /*
-    println!("{:?}", row_hashes[0]);
-    println!("{:?}", col_hashes[0]);
-    println!("{:?}", box_hashes[0]);
-    */
-
     while !solved {
 
         // ---------------------------------
@@ -164,11 +126,6 @@ fn main() {
                     let mut curr_row : usize = current_puzzle.grid_squares[x][y].row_id;
                     let mut curr_col : usize = current_puzzle.grid_squares[x][y].col_id;
                     let mut curr_box : usize = current_puzzle.grid_squares[x][y].box_id;
-
-                    // pass 'is final' data over to the hash map tracker
-                    row_hashes[curr_row].insert(curr_num.to_string(), 1);
-                    col_hashes[curr_col].insert(curr_num.to_string(), 1);
-                    box_hashes[curr_box].insert(curr_num.to_string(), 1);
 
                     // row removal
                     for c in 0..SUDOKU_SIZE {
@@ -197,6 +154,26 @@ fn main() {
             }
         }
 
+        // update final markers
+        for x in 0..SUDOKU_SIZE {
+            for y in 0.. SUDOKU_SIZE {
+                if current_puzzle.grid_squares[x][y].solutions.len() == 1 {
+
+                    // get current items
+                    let curr_num : usize = current_puzzle.grid_squares[x][y].solutions[0];
+                    let curr_row : usize = current_puzzle.grid_squares[x][y].row_id;
+                    let curr_col : usize = current_puzzle.grid_squares[x][y].col_id;
+                    let curr_box : usize = current_puzzle.grid_squares[x][y].box_id;
+
+                    current_puzzle.grid_squares[x][y].is_final = true;
+                    current_puzzle.row_final_status[curr_row][(curr_num-1)] = true;
+                    current_puzzle.col_final_status[curr_col][(curr_num-1)] = true;
+                    current_puzzle.box_final_status[curr_box][(curr_num-1)] = true;
+
+                }
+            }
+        }
+
         // TODO: get rid of row/col/box hash tracking
         //       add logic to update the is_final tracking before affirmation step
 
@@ -215,8 +192,7 @@ fn main() {
                     *temp_hist.entry(x.to_string()).or_insert(0) += 1;
                 }
             }
-            println!("{:?}", temp_hist);
-            println!("-----------");
+
             // at this point, we have a hash map of all the possible values that can be entered
             // into grid square entities for each row.
             //
