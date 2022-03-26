@@ -1,212 +1,353 @@
-// Main file for sudoku solver
-// serves as an entry point for the MVC framework
-// (or at least my sloppy version of it)
+// imports
+use chrono::prelude::*;
 
-// mod rusty_sudoku_model;
+use crossterm::{
+    event::{self, Event as CEvent, KeyCode},
+    terminal::{disable_raw_mode, enable_raw_mode},
+};
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::io;
+use std::sync::mpsc;
+use std::thread;
+use std::time::{Duration, Instant};
+use thiserror::Error;
 
-// for optimization only, not used in initial solution
-extern crate bitflags;
+//use thiserror::Error;
 
-// DEBUG ONLY
-// function to print sudoku grids
-// takes in immutable slice of the full on vector
-fn pretty_print_grid(grid_numbers : &[u8]) {
+use tui::{
+    backend::CrosstermBackend,
+    layout::{Alignment, Constraint, Direction, Layout},
+    style::{Color, Modifier, Style},
+    text::{Span, Spans},
+    widgets::{
+        Block, BorderType, Borders, Cell, List, ListItem, ListState, Paragraph, Row, Table, Tabs,
+    },
+    Terminal,
+};
 
-   // constants, vector slicing, and setting up range bounds
-   let sudoku_size : usize = 9;
-   let mut curr_idx : usize = 1;
-   let mut low_idx : usize;
-
-   while curr_idx <= grid_numbers.len() {
-        // printing the current line
-        if curr_idx % sudoku_size == 0 {
-            low_idx = curr_idx - sudoku_size;
-            println!("{:?}", &grid_numbers[low_idx..curr_idx]);
-            curr_idx = curr_idx + 1;
-        }
-        else {
-            curr_idx = curr_idx + 1;
-        }
-   }
+// error handling
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("error reading the DB file: {0}")]
+    ReadDBError(#[from] io::Error),
+    #[error("error parsing the DB file: {0}")]
+    ParseDBError(#[from] serde_json::Error),
 }
 
-#[derive(Clone)]
-struct GridUnit {
-    solutions : Vec<u8>,
-    is_final : bool
+// data structures
+enum Event<I> {
+    Input(I),
+    Tick, // tick set to every 200 ms
 }
 
-fn main() {
+#[derive(Copy, Clone, Debug)]
+enum MenuItem {
+    Home,
+    Settings,
+}
 
-    // websudoku.com/images/example-steps.html
-    // CURRENT ISSUE: trims options correctly, but doesn't affirm single remaining
-    // options for solutions based on solution space. See step one on guided walkthrough
-    // for exmaple of needed "affirmative" logic.
-
-    let mut test_input : Vec<Vec<u8>> =
-        vec![vec![0,0,0,0,0,0,6,8,0],
-             vec![0,0,0,0,7,3,0,0,9],
-             vec![3,0,9,0,0,0,0,4,5],
-             vec![4,9,0,0,0,0,0,0,0],
-             vec![8,0,3,0,5,0,9,0,2],
-             vec![0,0,0,0,0,0,0,3,6],
-             vec![9,6,0,0,0,0,3,0,8],
-             vec![7,0,0,6,8,0,0,0,0],
-             vec![0,2,8,0,0,0,0,0,0]];
-
-    // =================
-    // INITALIZATION
-    // =================
-
-    // initializing an empty 9x9 collection of grid units
-    let mut solution_space = Vec::new();
-    for x in 0..9 {
-        let mut solution_space_sub = Vec::new();
-        for y in 0..9 {
-            let mut single_grid_obj = GridUnit{solutions : vec![], is_final : false };
-            solution_space_sub.push(single_grid_obj);
+// collection of "pages"
+impl From<MenuItem> for usize {
+    fn from(input: MenuItem) -> usize {
+        match input {
+            MenuItem::Home => 0,
+            MenuItem::Settings => 1,
         }
-        solution_space.push(solution_space_sub);
     }
+}
 
-    // filling the 9x9 collection with information
-    for x in 0..9 {
-        for y in 0..9 {
-            if test_input[x][y] != 0 {
-                solution_space[x][y].solutions.push(test_input[x][y]);
-                solution_space[x][y].is_final = true;
-            } else {
-                let mut filler : Vec<u8> = (1..=9).collect();
-                solution_space[x][y].solutions.extend(filler);
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    enable_raw_mode().expect("can run in raw mode");
+
+    let (tx, rx) = mpsc::channel();
+    let tick_rate = Duration::from_millis(200);
+
+    // async management
+    thread::spawn(move || {
+        let mut last_tick = Instant::now();
+        loop {
+            let timeout = tick_rate
+                .checked_sub(last_tick.elapsed())
+                .unwrap_or_else(|| Duration::from_secs(0));
+
+            if event::poll(timeout).expect("poll works") {
+                if let CEvent::Key(key) = event::read().expect("can read events") {
+                    tx.send(Event::Input(key)).expect("can send events");
+                }
             }
-        }
-    }
 
-    // debug grid print loop
-    // for x in 0..9 {
-    //     for y in 0..9 {
-    //         println!("{0:?} {1:?}", solution_space[x][y].is_final,
-    //                                 solution_space[x][y].solutions);
-    //     }
-    // }
-
-    // =================
-    // SOLUTION PROCESS
-    // =================
-
-    // variable for the solution state of the puzzle,
-    // not just the individual grid items
-    let mut iter_num : u64 = 0;
-    let mut solved : bool = false;
-
-    // process for looping over and solving the puzzle
-    while !solved {
-
-        println!("iteration # : {:?}",iter_num);
-
-        // POSIBILITY REDUCTION
-        // for all the 'solved' grid items...
-        for x in 0..9 {
-            for y in 0..9 {
-                if solution_space[x][y].is_final == true {
-
-                    // get current finalized value
-                    let mut curr_num : u8 = solution_space[x][y].solutions[0];
-
-                    // remove from row
-                    for row in 0..9 {
-                        if row != x {
-                            solution_space[row][y].solutions.retain(|&x| x != curr_num);
-                        }
-                    }
-
-                    // remove from columns
-                    for col in 0..9 {
-                        if col != y {
-                            solution_space[x][col].solutions.retain(|&x| x != curr_num);
-                        }
-                    }
-
-                    // remove from box
-                    // there's a more efficent way to do this, I'm just being lazy I guess
-                    let mut box_row : u8 = (x as u8) / 3;
-                    let mut box_col : u8 = (y as u8) / 3;
-                    let mut box_num = (box_row * 3) + box_col;
-
-                    for row in 0..9 {
-                        for col in 0..9 {
-                            let mut inner_box_row : u8 = (row as u8) / 3;
-                            let mut inner_box_col : u8 = (col as u8) / 3;
-                            let mut inner_box_num : u8 = (inner_box_row * 3) + inner_box_col;
-
-                            if (row != x) && (col != y) {
-                                if box_num == inner_box_num {
-                                    solution_space[row][col].solutions.retain(|&x| x != curr_num);
-                                }
-                            }
-                        }
-                    }
-
+            if last_tick.elapsed() >= tick_rate {
+                if let Ok(_) = tx.send(Event::Tick) {
+                    last_tick = Instant::now();
                 }
             }
         }
+    });
 
-        // POSSIBILITY AFIRMATION
-        // add "affirm row" here (i.e., if this row still needs #3 and it can only
-        // possibly be written to one place, write that value to the grid unit and
-        // reduce the possibilites vector)
-        for row in 0..9 {
-            for cell in 0..9 {
+    // Configure Crossterm backend for tui
+    let stdout = io::stdout();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
 
+    terminal.clear()?;
+    terminal.hide_cursor()?;
+
+    // basic setup
+    let menu_titles = vec!["Home", "Settings"];
+    let mut active_menu_item = MenuItem::Home;
+
+    loop {
+        terminal.draw(|rect| {
+            let size = rect.size();
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(2)
+                .constraints(
+                    [
+                        Constraint::Length(3),
+                        Constraint::Min(2),
+                        Constraint::Length(3),
+                    ]
+                    .as_ref(),
+                )
+                .split(size);
+
+            let navigation = Paragraph::new("(Add in key navigation menu here)")
+                .style(Style::default().fg(Color::LightCyan))
+                .alignment(Alignment::Center)
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .style(Style::default().fg(Color::White))
+                        .title("Navigation")
+                        .border_type(BorderType::Plain),
+                );
+
+            let menu = menu_titles
+                .iter()
+                .map(|t| {
+                    let (first, rest) = t.split_at(1);
+                    Spans::from(vec![
+                        Span::styled(
+                            first,
+                            Style::default()
+                                .fg(Color::Yellow)
+                                .add_modifier(Modifier::UNDERLINED),
+                        ),
+                        Span::styled(rest, Style::default().fg(Color::White)),
+                    ])
+                })
+                .collect();
+
+            // FIRST CHUNK
+            let tabs = Tabs::new(menu)
+                .select(active_menu_item.into())
+                .block(Block::default().title("Menu").borders(Borders::ALL))
+                .style(Style::default().fg(Color::White))
+                .highlight_style(Style::default().fg(Color::Yellow))
+                .divider(Span::raw("|"));
+            rect.render_widget(tabs, chunks[0]);
+
+            // SECOND CHUNK
+            // temp render for home/default menu
+            match active_menu_item {
+                MenuItem::Home => rect.render_widget(render_home(), chunks[1]),
+                MenuItem::Settings => rect.render_widget(render_home(), chunks[1]),
             }
-        }
 
-
-        // mark newly final solutions
-        for x in 0..9 {
-            for y in 0..9 {
-                if solution_space[x][y].solutions.len() == 1 {
-                    solution_space[x][y].is_final = true;
+            /*
+            match active_menu_item {
+                MenuItem::Home => rect.render_widget(render_home(), chunks[1]),
+                MenuItem::Settings => {
+                    let pets_chunks = Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints(
+                            [Constraint::Percentage(20), Constraint::Percentage(80)].as_ref(),
+                        )
+                        .split(chunks[1]);
+                    let (left, right) = render_pets(&pet_list_state);
+                    rect.render_stateful_widget(left, pets_chunks[0], &mut pet_list_state);
+                    rect.render_widget(right, pets_chunks[1]);
                 }
             }
-        }
+            */
 
-        // have we solved the puzzle?
-        // if any of the entries are longer than 1 element, we haven't, so keep solving.
-        // otherwise the process is complete.
-        solved = true;
-        for x in 0..9 {
-            for y in 0..9 {
-                if solution_space[x][y].is_final == false {
-                    solved = false;
+            // THIRD CHUNK
+            rect.render_widget(navigation, chunks[2]);
+        })?;
+
+        // HANDLING INPUT
+        match rx.recv()? {
+            Event::Input(event) => match event.code {
+                KeyCode::Char('q') => {
+                    disable_raw_mode()?;
+                    terminal.show_cursor()?;
                     break;
                 }
-            }
+                KeyCode::Char('h') => active_menu_item = MenuItem::Home,
+                KeyCode::Char('s') => active_menu_item = MenuItem::Settings,
+                _ => {}
+            },
+            Event::Tick => {}
         }
+    }
 
-        iter_num = iter_num + 1;
+    /*
+    // Restore the terminal and close application
+    terminal.clear()?;
+    terminal.show_cursor()?;
+    crossterm::terminal::disable_raw_mode()?;
 
-        // debug
-        if iter_num > 10 {
-            for x in 0..9 {
-                println!("\nRow # {:?}", x);
-                for y in 0..9 {
-                    println!("{0:?} {1:?}", solution_space[x][y].is_final,
-                                            solution_space[x][y].solutions);
+    match rx.recv()? {
+        Event::Input(event) => match event.code {
+            KeyCode::Char('q') => {
+                disable_raw_mode()?;
+                terminal.show_cursor()?;
+                break;
+            }
+            KeyCode::Char('h') => active_menu_item = MenuItem::Home,
+            KeyCode::Char('p') => active_menu_item = MenuItem::Pets,
+            KeyCode::Char('a') => {
+                add_random_pet_to_db().expect("can add new random pet");
+            }
+            KeyCode::Char('d') => {
+                remove_pet_at_index(&mut pet_list_state).expect("can remove pet");
+            }
+            KeyCode::Down => {
+                if let Some(selected) = pet_list_state.selected() {
+                    let amount_pets = read_db().expect("can fetch pet list").len();
+                    if selected >= amount_pets - 1 {
+                        pet_list_state.select(Some(0));
+                    } else {
+                        pet_list_state.select(Some(selected + 1));
+                    }
                 }
             }
-            break;
-        }
-
+            KeyCode::Up => {
+                if let Some(selected) = pet_list_state.selected() {
+                    let amount_pets = read_db().expect("can fetch pet list").len();
+                    if selected > 0 {
+                        pet_list_state.select(Some(selected - 1));
+                    } else {
+                        pet_list_state.select(Some(amount_pets - 1));
+                    }
+                }
+            }
+            _ => {}
+        },
+        Event::Tick => {}
     }
+    */
 
-    println!("The puzzle is solved! Final answer:");
-
-    for row in 0..9 {
-        let mut row_print = Vec::new();
-        for col in 0..9 {
-            row_print.push(solution_space[row][col].solutions[0]);
-        }
-        println!("{:?}", row_print);
-    }
+    Ok(())
 }
+
+// Draw functions for home and settings
+fn render_home<'a>() -> Paragraph<'a> {
+    let home = Paragraph::new(vec![
+        Spans::from(vec![Span::raw("")]),
+        Spans::from(vec![Span::raw("Welcome")]),
+        Spans::from(vec![Span::raw("")]),
+        Spans::from(vec![Span::raw("to")]),
+        Spans::from(vec![Span::raw("")]),
+        Spans::from(vec![Span::styled(
+            "rusty-cards!",
+            Style::default().fg(Color::LightBlue),
+        )]),
+        Spans::from(vec![Span::raw("")]),
+        Spans::from(vec![Span::raw("LOL I don't have any functionality here.")]),
+    ])
+    .alignment(Alignment::Center)
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default().fg(Color::White))
+            .title("Home")
+            .border_type(BorderType::Plain),
+    );
+    home
+}
+
+/*
+fn render_pets<'a>(pet_list_state: &ListState) -> (List<'a>, Table<'a>) {
+    let pets = Block::default()
+        .borders(Borders::ALL)
+        .style(Style::default().fg(Color::White))
+        .title("Pets")
+        .border_type(BorderType::Plain);
+
+    let pet_list = read_db().expect("can fetch pet list");
+    let items: Vec<_> = pet_list
+        .iter()
+        .map(|pet| {
+            ListItem::new(Spans::from(vec![Span::styled(
+                pet.name.clone(),
+                Style::default(),
+            )]))
+        })
+        .collect();
+
+    let selected_pet = pet_list
+        .get(
+            pet_list_state
+                .selected()
+                .expect("there is always a selected pet"),
+        )
+        .expect("exists")
+        .clone();
+
+    let list = List::new(items).block(pets).highlight_style(
+        Style::default()
+            .bg(Color::Yellow)
+            .fg(Color::Black)
+            .add_modifier(Modifier::BOLD),
+    );
+
+    let pet_detail = Table::new(vec![Row::new(vec![
+        Cell::from(Span::raw(selected_pet.id.to_string())),
+        Cell::from(Span::raw(selected_pet.name)),
+        Cell::from(Span::raw(selected_pet.category)),
+        Cell::from(Span::raw(selected_pet.age.to_string())),
+        Cell::from(Span::raw(selected_pet.created_at.to_string())),
+    ])])
+    .header(Row::new(vec![
+        Cell::from(Span::styled(
+            "ID",
+            Style::default().add_modifier(Modifier::BOLD),
+        )),
+        Cell::from(Span::styled(
+            "Name",
+            Style::default().add_modifier(Modifier::BOLD),
+        )),
+        Cell::from(Span::styled(
+            "Category",
+            Style::default().add_modifier(Modifier::BOLD),
+        )),
+        Cell::from(Span::styled(
+            "Age",
+            Style::default().add_modifier(Modifier::BOLD),
+        )),
+        Cell::from(Span::styled(
+            "Created At",
+            Style::default().add_modifier(Modifier::BOLD),
+        )),
+    ]))
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default().fg(Color::White))
+            .title("Detail")
+            .border_type(BorderType::Plain),
+    )
+    .widths(&[
+        Constraint::Percentage(5),
+        Constraint::Percentage(20),
+        Constraint::Percentage(20),
+        Constraint::Percentage(5),
+        Constraint::Percentage(20),
+    ]);
+
+    (list, pet_detail)
+}
+*/
