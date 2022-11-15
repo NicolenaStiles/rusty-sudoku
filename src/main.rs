@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // General/overall imports:
-// imports for VoronoiPoint
+// imports for Puzzle
 use std::fmt; // for debug
 use std::error::Error;
 use std::fs::File;
@@ -27,38 +27,6 @@ fn load_puzzles(filepath: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 */
-// field UnitType for VoronoiPoint
-#[derive(Copy,Clone)]
-enum Difficulty {
-    Undefined,
-    Easy,
-    Medium,
-    Hard
-}
-
-// debug implementation for UnitType enum
-impl fmt::Debug for Difficulty {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Difficulty::Undefined => write!(f, "Undefined"),
-            Difficulty::Easy => write!(f, "Easy"),
-            Difficulty::Medium => write!(f, "Medium"),
-            Difficulty::Hard => write!(f, "Hard"),        
-        }
-    }
-}
-
-struct Puzzle {
-    unsolved: Vec<u8>,
-    solved: Vec<u8>,
-    current_state: Vec<u8>, 
-    difficulty: Difficulty
-}
-
-// Converts single string into vector of u8 ints
-fn string_to_int_vec() {
-
-}
 
 fn main() {
     // Create a CSV parser that reads data from stdin.
