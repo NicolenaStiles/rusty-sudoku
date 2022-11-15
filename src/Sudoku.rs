@@ -58,10 +58,9 @@ pub struct Puzzle {
 
 // implementation of Puzzle
 // includes:
-// - load random puzzle
 // - load puzzle from idx
 // - debug status and printing
-// TODO: add instantiaion function? Feels like that isn't needed...?
+// TODO: Load random puzzle based on difficulty
 impl Puzzle {
 
     // this is kinda nonsense tbh but I think it has to be here
@@ -74,11 +73,6 @@ impl Puzzle {
             current_state: vec![0; 81],
             solution: vec![0; 81]
         }
-    }
-
-    pub fn load_random_puzzle(&mut self, filepath: String) {
-        println!("{:?}", filepath);
-        println!("Not implemented!");
     }
 
     pub fn load_puzzle_from_idx(&mut self, filepath: String, idx: u32) {
@@ -154,15 +148,3 @@ impl Puzzle {
         println!("Solution: {:?}", self.solution);
     }
 }
-
-// Converts single string into vector of u8 ints
-/* 
-fn string_to_int_vec() {
-    let byte_vector = record[0].as_bytes();
-    let mut final_vector: Vec<u8> = vec![0; 81];
-    for (i, val) in byte_vector.iter().enumerate() {
-        final_vector[i] = *val - 48;
-    }
-}
-*/
-
