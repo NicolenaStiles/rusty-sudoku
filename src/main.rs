@@ -30,6 +30,11 @@ struct Puzzle {
     solved: Vec<u8>
 }
 
+// Converts single string into vector of u8 ints
+fn string_to_int_vec() {
+
+}
+
 fn main() {
     // Create a CSV parser that reads data from stdin.
     let rdr = csv::Reader::from_path("./src/puzzles.csv");
@@ -38,9 +43,22 @@ fn main() {
         // An error may occur, so abort the program in an unfriendly way.
         // We will make this more friendly later!
         let record = result.expect("Expects valid CSV.");
+        
+        // DEBUG ONLY
         for field in &record {
-            println!("{:?}", field);
+            print!("{:?},", field);
         }
-        // Print a debug version of the record.
+        print!("\n");
+
+        // converts from single string into array of bytes, then from bytes to base values
+        // (48 is constant to convert 0-9 numbers from ascii value)
+        let byte_vector = record[0].as_bytes();
+        let mut final_vector: Vec<u8> = vec![0; 81];
+        for (i, val) in byte_vector.iter().enumerate() {
+            final_vector[i] = *val - 48;
+        }
+        println!("byte vector: {:?}", byte_vector);
+        println!("final vector: {:?}", final_vector);
+
     }
 }
