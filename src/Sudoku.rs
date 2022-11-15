@@ -47,7 +47,7 @@ impl fmt::Debug for Difficulty {
     }
 }
 
-struct Puzzle {
+pub struct Puzzle {
     idx: u32,
     difficulty: Difficulty,
     initial: Vec<u8>,
@@ -58,10 +58,48 @@ struct Puzzle {
 
 // implementation of Puzzle
 // includes:
+// - load random puzzle
+// - load puzzle from idx
 // - debug status and printing
 // TODO: add instantiaion function? Feels like that isn't needed...?
 impl Puzzle {
-    fn print_status(&mut self) {
+
+    // this is kinda nonsense tbh but I think it has to be here
+    pub fn new() -> Self {
+        Puzzle {
+            idx: 0,
+            difficulty: Difficulty::UNDEFINED,
+            initial: vec![0; 81],
+            is_started: false,
+            current_state: vec![0; 81],
+            solution: vec![0; 81]
+        }
+    }
+
+    pub fn load_random_puzzle(&mut self, filepath: String) {
+        println!("{:?}", filepath);
+        println!("Not implemented!");
+    }
+
+    pub fn load_puzzle_from_idx(&mut self, filepath: String, idx: u32) {
+        // Spin up CSV parser
+        let rdr = csv::Reader::from_path(filepath);
+        // Each line is an entry/puzzle
+        for entry in rdr.unwrap().records() { 
+            let record = entry.expect("Expects valid CSV... whoops!");
+            // If the idx matches the one we're looking for, we're good!
+            // Otherwise... keep going.
+            let idx_field: u32 = record[0].parse().unwrap();
+            if idx_field == idx {
+                println!("Found it!");
+                self.idx = idx_field;
+            } else {
+                println!("Not it!");
+            }
+        }
+    }
+
+    pub fn print_status(&mut self) {
         println!("Puzzle #: {:?}", self.idx);
         println!("Difficulty: {:?}", self.difficulty);
         println!("Initial: {:?}", self.initial);
@@ -72,6 +110,8 @@ impl Puzzle {
 }
 
 // Converts single string into vector of u8 ints
+/* 
 fn string_to_int_vec() {
 
 }
+*/
