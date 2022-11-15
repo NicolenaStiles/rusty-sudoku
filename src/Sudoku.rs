@@ -92,7 +92,53 @@ impl Puzzle {
             let idx_field: u32 = record[0].parse().unwrap();
             if idx_field == idx {
                 println!("Found it!");
+                // idx
                 self.idx = idx_field;
+                // difficulty
+                let diff_field : String = record[1].parse().unwrap();
+                match diff_field.as_str() {
+                    "UNDEFINED" => 
+                        self.difficulty = Difficulty::UNDEFINED,
+                    "EASY" =>
+                        self.difficulty = Difficulty::EASY,
+                    "MEDIUM" =>
+                        self.difficulty = Difficulty::MEDIUM,
+                    "HARD" =>
+                        self.difficulty = Difficulty::HARD,
+                    _ =>
+                        println!("Oops!"),
+                }
+                // initial
+                let intl_bytes = record[2].as_bytes();
+                let mut intl_vector: Vec<u8> = vec![0; 81];
+                for (i, val) in intl_bytes.iter().enumerate() {
+                    intl_vector[i] = *val - 48;
+                }
+                self.initial = intl_vector;
+                // is started
+                let is_started : String = record[3].parse().unwrap();
+                match is_started.as_str() {
+                    "true" =>
+                        self.is_started = true,
+                    "false" =>
+                        self.is_started = false,
+                    _ => 
+                        println!("Oops!"),
+                }
+                // current state
+                let state_bytes = record[4].as_bytes();
+                let mut state_vector: Vec<u8> = vec![0; 81];
+                for (i, val) in state_bytes.iter().enumerate() {
+                    state_vector[i] = *val - 48;
+                }
+                self.current_state = state_vector;   
+                // solution
+                let soln_bytes = record[5].as_bytes();
+                let mut soln_vector: Vec<u8> = vec![0; 81];
+                for (i, val) in soln_bytes.iter().enumerate() {
+                    soln_vector[i] = *val - 48;
+                }
+                self.solution = soln_vector;                              
             } else {
                 println!("Not it!");
             }
@@ -112,6 +158,11 @@ impl Puzzle {
 // Converts single string into vector of u8 ints
 /* 
 fn string_to_int_vec() {
-
+    let byte_vector = record[0].as_bytes();
+    let mut final_vector: Vec<u8> = vec![0; 81];
+    for (i, val) in byte_vector.iter().enumerate() {
+        final_vector[i] = *val - 48;
+    }
 }
 */
+
