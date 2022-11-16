@@ -28,7 +28,7 @@ use rand::Rng;
 
 // field Difficulty for Puzzle
 #[derive(Copy,Clone)]
-enum Difficulty {
+pub enum Difficulty {
     UNDEFINED,
     EASY,
     MEDIUM,
@@ -73,6 +73,35 @@ impl Puzzle {
             current_state: vec![0; 81],
             solution: vec![0; 81]
         }
+    }
+
+    pub fn load_puzzle_from_difficulty(&mut self, filepath: String, difficulty: Difficulty) {
+        // Vector of potential idx of unsolved & desired difficulty
+        let mut diff_string = "";
+        match difficulty {
+            Difficulty::UNDEFINED =>
+                diff_string = "UNDEFINED",
+            Difficulty::EASY =>
+                diff_string= "EASY",
+            Difficulty::MEDIUM =>
+                diff_string = "MEDIUM",
+            Difficulty:: HARD =>
+                diff_string = "HARD"
+        }
+        let mut puzzle_vects: Vec<u32> = Vec::new();
+        // Spin up CSV parser
+        let rdr = csv::Reader::from_path(filepath);
+        // Each line is an entry/puzzle
+        for entry in rdr.unwrap().records() { 
+            let record = entry.expect("Expects valid CSV... whoops!");
+            // Pull out puzzles that match desired difficulty
+            let diff_field: String = record[1].parse().unwrap();
+            if diff_field == diff_string {
+                let idx_field: u32 = record[0].parse().unwrap();
+                puzzle_vects.push(idx_field);
+            }
+        }
+        println!("{:?}", puzzle_vects);
     }
 
     pub fn load_puzzle_from_idx(&mut self, filepath: String, idx: u32) {
