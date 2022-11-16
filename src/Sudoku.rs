@@ -9,7 +9,7 @@
 // imports for Puzzle Selection
 use std::fmt; // for debug
 
-// for random seed/site generation
+// for random puzzle selection
 use rand::Rng;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -133,8 +133,6 @@ impl Puzzle {
                     soln_vector[i] = *val - 48;
                 }
                 self.solution = soln_vector;                              
-            } else {
-                println!("Not it!");
             }
         }
     }
