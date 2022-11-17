@@ -94,14 +94,18 @@ impl Puzzle {
         // Each line is an entry/puzzle
         for entry in rdr.unwrap().records() { 
             let record = entry.expect("Expects valid CSV... whoops!");
-            // Pull out puzzles that match desired difficulty
+            // Pull out puzzles that match desired difficulty & haven't been started
             let diff_field: String = record[1].parse().unwrap();
-            if diff_field == diff_string {
+            let start_field: String = record[3].parse().unwrap();
+            if diff_field == diff_string && start_field == "false" {
                 let idx_field: u32 = record[0].parse().unwrap();
                 puzzle_vects.push(idx_field);
             }
         }
+        // Pick a random puzzle from list
         println!("{:?}", puzzle_vects);
+
+        // Load selected puzzle into data structure
     }
 
     pub fn load_puzzle_from_idx(&mut self, filepath: String, idx: u32) {
